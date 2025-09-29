@@ -2,12 +2,12 @@
 
 #define FrClk 12000000
 #define FreqTimer0_emHz 100
-#define CORRECAO 10
+#define CORRECAO 9
 #define TH0_Inicial ((65536-(FrClk/(12*FreqTimer0_emHz))+CORRECAO)>>8)
 #define TL0_Inicial ((65536-(FrClk/(12*FreqTimer0_emHz))+CORRECAO)&0xFF)
 
-sbit index_zero = P2^0; // Referência ao bit na posição 0 da porta 2 (P2) 
-sbit index_one = P2^1;  // Referência ao bit na posição 1 da porta 2 (P2)
+sbit index_zero = P2^0; // ReferÃªncia ao bit na posiÃ§Ã£o 0 da porta 2 (P2) 
+sbit index_one = P2^1;  // ReferÃªncia ao bit na posiÃ§Ã£o 1 da porta 2 (P2)
 
 void timer0_inicializa();
 void timer0_int();	
@@ -20,7 +20,7 @@ unsigned char aux_p1 = 0xFF;
 
 void main(){
 	timer0_inicializa();
-	EA=1; // Habilita o tratamento de interrupções
+	EA=1; // Habilita o tratamento de interrupÃ§Ãµes
 	while(1){
 		functionA();
 		functionB();
@@ -33,7 +33,7 @@ void timer0_inicializa(){
 	TH0 = TH0_Inicial;
 	TL0 = TL0_Inicial;
 	ET0 = 1; // Habilita interrupcao do timer 0
-	TR0 = 1; // Habilita a execução do timer 0	 
+	TR0 = 1; // Habilita a execuÃ§Ã£o do timer 0	 
 }
 
 void timer0_int() interrupt 1 using 2{
@@ -45,12 +45,12 @@ void timer0_int() interrupt 1 using 2{
 	timer_count2 ++;
 }
 
-//Função que implementa a máquina de estados relacionada à substituição dos 4 MSB de P1
+//FunÃ§Ã£o que implementa a mÃ¡quina de estados relacionada Ã  substituiÃ§Ã£o dos 4 MSB de P1
 void functionA(){
 	
-	static char state = 0; //Variável de estado
+	static char state = 0; //VariÃ¡vel de estado
 	
-	//Switch responsável pelas transições dos estados
+	//Switch responsÃ¡vel pelas transiÃ§Ãµes dos estados
 		switch (state){
 			//Estado inicial: bit 1 de P2 em 1
 			case 0: if (~index_one){
@@ -59,31 +59,30 @@ void functionA(){
 				break;
 			//Estado : bit 1 de P2 em 0
 			case 1: if (index_one){
-				// Mantém os 4 LSB de aux_p1 e substitui os 4 MSB pelos 4 MSB da porta 0 (P0)
+				timer_count = 0;
+				// MantÃ©m os 4 LSB de aux_p1 e substitui os 4 MSB pelos 4 MSB da porta 0 (P0)
 				aux_p1 = (aux_p1 & 0x0f) | (P0 & 0xf0);
 				state = 2;
-				timer_count = 0;
 			} 
 				break;
-			//Estado: Temporizador. Obs: Número máximo de t obtido a partir de teste no ambiente de simulação
 			case 2: if (timer_count>=100){
-				// Zera os 4 MSB de aux_p1 e mantém os 4 LSB
+				// Zera os 4 MSB de aux_p1 e mantÃ©m os 4 LSB
 				aux_p1 = aux_p1 & 0x0f;
 				state = 0;
 			}
 				break;
 		}
-		//Atualização da porta P1
+		//AtualizaÃ§Ã£o da porta P1
 		P1 = aux_p1;
 		
 }	
 
-//Função que implementa a máquina de estados relacionada à substituição dos 4 LSB de P1
+//FunÃ§Ã£o que implementa a mÃ¡quina de estados relacionada Ã  substituiÃ§Ã£o dos 4 LSB de P1
 void functionB(){
 	
-	static char state2 = 0; //Variável de estado
+	static char state2 = 0; //VariÃ¡vel de estado
 	
-		//Switch responsável pelas transições dos estados
+		//Switch responsÃ¡vel pelas transiÃ§Ãµes dos estados
 		switch (state2){
 			//Estado inicial: bit 0 de P2 em 1
 			case 0: if (~index_zero){
@@ -92,21 +91,20 @@ void functionB(){
 				break;
 			//Estado : bit 0 de P2 em 0
 			case 1: if (index_zero){
-				// Mantém os 4 MSB de aux_p1 e substitui os 4 LSB pelos 4 LSB de P0
+				timer_count2 = 0;
+				// MantÃ©m os 4 MSB de aux_p1 e substitui os 4 LSB pelos 4 LSB de P0
 			  aux_p1 = (aux_p1 & 0xf0) | (P0 & 0x0f);
 				state2 = 2;
-				timer_count2 = 0;
 			} 
 				break;
-			//Estado: Temporizador. Obs: Número máximo de t obtido a partir de teste no ambiente de simulação
 			case 2: if (timer_count2>=100){
-				// Zera os 4 LSB de aux_p1 e mantém os 4 MSB
+				// Zera os 4 LSB de aux_p1 e mantÃ©m os 4 MSB
 			  aux_p1 = aux_p1 & 0xf0;
 				state2 = 0;
 			}
 				break;
 		}
-				//Atualização da porta P1
+				//AtualizaÃ§Ã£o da porta P1
 		P1 = aux_p1;
 		
 }	
