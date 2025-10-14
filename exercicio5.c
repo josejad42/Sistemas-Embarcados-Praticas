@@ -1,22 +1,22 @@
 #include <REG51F.H>
 
-#define TH1_value 204 //Definindo o valor de TH1 baseado na equaÁ„o TH1 = 256 - ((2^SMOD*10^6) / (32*1200))
+#define TH1_value 204 //Definindo o valor de TH1 baseado na equa√ß√£o TH1 = 256 - ((2^SMOD*10^6) / (32*1200))
 #define EOS '$'
 
-char Tx_buffer[16]; //Buffer de transmiss„o
-char Rx_buffer[16]; //Buffer de recepÁ„o
+char Tx_buffer[16]; //Buffer de transmiss√£o
+char Rx_buffer[16]; //Buffer de recep√ß√£o
 
-/** Apontadores para inserÁ„o e remoÁ„o de caracteres nos buffers **/
+/** Apontadores para inser√ß√£o e remo√ß√£o de caracteres nos buffers **/
 unsigned char Tx_in = 0;
 unsigned char Tx_out = 0;
 
 unsigned char Rx_in = 0;
 unsigned char Rx_out = 0;
 
-unsigned char RecebeuString = 0; //Vari·vel que indica que h· uma string recebida n„o lida no buffer
-unsigned char txOcupado = 0; //Vari·vel de controle para saber se o transmissor est· livre 
+unsigned char RecebeuString = 0; //Vari√°vel que indica que h√° uma string recebida n√£o lida no buffer
+unsigned char txOcupado = 0; //Vari√°vel de controle para saber se o transmissor est√° livre 
 
-//FunÁ„o que retorna se o buffer est· vazio ou n„o
+//Fun√ß√£o que retorna se o buffer est√° vazio ou n√£o
 char RxBufferVazio(){
 	if(Rx_in == Rx_out){
 		return 1;
@@ -25,20 +25,20 @@ char RxBufferVazio(){
 	}
 }
 
-//FunÁ„o que retorna um caracter de RxBuffer
+//Fun√ß√£o que retorna um caracter de RxBuffer
 char ReceiveChar(){
 	char rcvd = Rx_buffer[Rx_out]; 
 	Rx_out++; //Atualiza o indice do proximo caractere a ser lido de RxBuffer
-	Rx_out = Rx_out & 0x0F; //Garante que Rx_out È um indice v·lido do buffer circular
+	Rx_out = Rx_out & 0x0F; //Garante que Rx_out √© um indice v√°lido do buffer circular
 	return rcvd;
 }
 
-//FunÁ„o que copia uma string de RxBuffer para o local apontado por '*s'
+//Fun√ß√£o que copia uma string de RxBuffer para o local apontado por '*s'
 void ReceiveString(char *s){
 	char rcvd = ReceiveChar();
 	unsigned char s_index = 0; 
 	
-	while(rcvd != EOS){ // LÍ caracteres atÈ chegar no fim da string
+	while(rcvd != EOS){ // L√™ caracteres at√© chegar no fim da string
 		s[s_index] = rcvd; // adiciona caractere lido
 		s_index++;
 		rcvd = ReceiveChar();
@@ -48,70 +48,69 @@ void ReceiveString(char *s){
 	RecebeuString--;
 }
 
-//FunÁ„o que recebe caractere e insere em TxBuffer
+//Fun√ß√£o que recebe caractere e insere em TxBuffer
 void SendChar(char c){
 	Tx_buffer[Tx_in] = c;
 	Tx_in++;
-	Tx_in = Tx_in & 0x0F; // Garante que Tx_in È um indice v·lido do buffer circular
+	Tx_in = Tx_in & 0x0F; // Garante que Tx_in √© um indice v√°lido do buffer circular
 }
 
-//FunÁ„o que insere a string apontada por '*s' em TxBuffer
+//Fun√ß√£o que insere a string apontada por '*s' em TxBuffer
 void SendString(char *s){
 	unsigned char s_index = 0;
-	while(s[s_index] != EOS){ // Adiciona caracteres ao buffer enquanto a string n„o chega ao fim
+	while(s[s_index] != EOS){ // Adiciona caracteres ao buffer enquanto a string n√£o chega ao fim
 		SendChar(s[s_index]);
 		s_index++;
 	}
 	SendChar(s[s_index]);
 	if(!txOcupado){ 
-		txOcupado = 1; // Indica que o transmissor est· ocupado
-		TI = 1; // Gera um pedido de interrupÁ„o
+		txOcupado = 1; // Indica que o transmissor est√° ocupado
+		TI = 1; // Gera um pedido de interrup√ß√£o
 	}
-	txOcupado = 0; // Indica que o transmissor est· livre
+	txOcupado = 0; // Indica que o transmissor est√° livre
 }
-//FunÁ„o de inicializaÁ„o do timer
+//Fun√ß√£o de inicializa√ß√£o do timer
 void timer_inicialize(){
 	TR1 = 0; //Desliga o timer 1
 	TMOD = (TMOD & 0x0F)|0x20; //Timer 1 programado no modo 2
 	TH1 = TH1_value; //Inicializa TH1 como o valor calculado anteriormente
-	ET1 = 0; // Desliga as interrupÁıes do timer 1
+	ET1 = 0; // Desliga as interrup√ß√µes do timer 1
 	PCON |= 0x80; //Inicializa SMOD como 1
 	TR1 = 1; //Inicia o timer 1
 }
 
-//FunÁ„o de inicializaÁ„o do serial
+//Fun√ß√£o de inicializa√ß√£o do serial
 void serial_inicialize(){
 	//Seta o serial como modo 1
 	SM0 = 0;
 	SM1 = 1;
 	
 	SM2 = 0;//Como estamos no modo 1, inicia como 0 para o stop bit funcionar
-	REN = 1;//Habilita as recepÁıes
+	REN = 1;//Habilita as recep√ß√µes
 }
 
-//InterrupÁ„o do serial
+//Interrup√ß√£o do serial
 void int_serial() interrupt 4 using 2{
 	char trsmt = 0;
 	
 	if(TI){
 		TI = 0;
-		if(Tx_out != Tx_in){ //Verifica se o buffer n„o est· vazio
+		if(Tx_out != Tx_in){ //Verifica se o buffer n√£o est√° vazio
 			trsmt = Tx_buffer[Tx_out];
-			Tx_out++; //Atualiza indice do prÛximo caractere a ser transmitido
-			Tx_out = Tx_out & 0x0F; // Garante que Tx_out È um indice v·lido do buffer circular
+			Tx_out++; //Atualiza indice do pr√≥ximo caractere a ser transmitido
+			Tx_out = Tx_out & 0x0F; // Garante que Tx_out √© um indice v√°lido do buffer circular
 			SBUF = trsmt; //transmite caracter
 		}
 	}
 	if(RI){
-		//Pega o valor recebido, incrementa em 1 e transmite
 		RI = 0;
-		if(((Rx_in + 1) % 16) != Rx_out){ // Verifica se o buffer n„o est· cheio
+		if(((Rx_in + 1) % 16) != Rx_out){ // Verifica se o buffer n√£o est√° cheio
 			Rx_buffer[Rx_in] = SBUF; 
-			if(Rx_buffer[Rx_in] == EOS){ // Verifica se È o fim da string
+			if(Rx_buffer[Rx_in] == EOS){ // Verifica se √© o fim da string
 				RecebeuString++; //Incrementa string recebida
 			}
 			Rx_in++; // Atualiza indice do proximo caracter a ser lido
-			Rx_in = Rx_in & 0x0F; // Garante que Rx_in È um indice v·lido do buffer circular
+			Rx_in = Rx_in & 0x0F; // Garante que Rx_in √© um indice v√°lido do buffer circular
 		}
 	}
 }
@@ -122,8 +121,8 @@ void main(){
 	
 	serial_inicialize();
 	timer_inicialize();
-	EA = 1; //Habilita interrupÁıes 
-	ES = 1; //Habilita interrupÁıes do serial
+	EA = 1; //Habilita interrup√ß√µes 
+	ES = 1; //Habilita interrup√ß√µes do serial
 	
 	while(1){
 		if(RecebeuString){
